@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+            display: block;
+            margin: 0 auto;
+            background: #eee;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        var canvas = document.getElementById('gameCanvas');
+        var ctx = canvas.getContext('2d');
+
+        var ball = { x: canvas.width / 2, y: canvas.height / 2, radius: 5 };
+        var paddle = { x: canvas.width / 2 - 35, y: canvas.height - 15, width: 70, height: 10 };
+        var compPaddle = { x: canvas.width / 2, y: 5, width: 70, height: 10 };
+        var speedX = 4; // Setting an initial horizontal speed
+        var speedY = -5;
+        var score = 0;
+        var gameOver = false;
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPaddle() {
+            ctx.beginPath();
+            ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawCompPaddle() {
+            ctx.beginPath();
+            ctx.rect(compPaddle.x, compPaddle.y, compPaddle.width, compPaddle.height);
+            ctx.fillStyle = "#0095DD";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function updateBall() {
+            ball.x += speedX;
+            ball.y += speedY;
+
+            // Wall collision (left or right)
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                speedX = -speedX;
+            }
+
+            // Top paddle collision
+            if (ball.y - ball.radius < compPaddle.y + compPaddle.height &&
+                ball.x > compPaddle.x && ball.x < compPaddle.x + compPaddle.width) {
+                speedY = -speedY; // Reverse the vertical direction
+                ball.y = compPaddle.y + compPaddle.height + ball.radius; // Reposition to avoid sticking
+            }
+
+            // Player paddle collision
+            if (ball.y + ball.radius > paddle.y &&
+                ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+                speedY = -speedY; // Reverse the vertical direction
+                ball.y = paddle.y - ball.radius; // Reposition to avoid sticking
+                score++;  // Increase the score each time the ball hits the player's paddle
+            }
+
+            // Bottom collision (game over condition)
+            if (ball.y + ball.radius > canvas.height) {
+                gameOver = true; // Set game over to true to stop the game loop
+            }
+        }
+
+
+        function updateCompPaddle() {
+            // Simple AI to follow the ball
+            if (compPaddle.x + compPaddle.width / 2 < ball.x) {
+                compPaddle.x += 4; // Adjust speed as necessary
+            } else if (compPaddle.x + compPaddle.width / 2 > ball.x) {
+                compPaddle.x -= 4;
+            }
+        }
+
+        canvas.addEventListener('mousemove', function (event) {
+            var rect = canvas.getBoundingClientRect();
+            var root = document.documentElement;
+            var mouseX = event.clientX - rect.left - root.scrollLeft;
+            paddle.x = Math.min(Math.max(mouseX - paddle.width / 2, 0), canvas.width - paddle.width);
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall();
+            drawPaddle();
+            drawCompPaddle();
+        }
+
+        function displayGameOver() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            ctx.font = "36px Arial";
+            ctx.fillStyle = "red";
+            ctx.textAlign = "center";
+            ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
+            ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 + 40);
+        }
+
+        function gameLoop() {
+            if (!gameOver) {
+                updateBall();
+                updateCompPaddle();
+                draw();
+                requestAnimationFrame(gameLoop);
+            } else {
+                displayGameOver();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(gameLoop);
+        });
+    </script>
+</body>
+
+</html>
